@@ -74,4 +74,4 @@ Returns "pong"
 
 The printer is accessible through SSH on port 22. 
 
-**UNCONFIRMED** the *root* user should according to the install scripts be set to the printer serial number with zeroes prepended to achieve six characters in total. Meaning a serial of *175* would give a root password of *000175*
+**UNCONFIRMED** the password of the *root* user should according to the install script be set to the printer serial number with zeroes prepended to achieve six characters in total. Meaning a serial of *175* would give a root password of *000175*
