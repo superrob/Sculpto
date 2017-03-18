@@ -29,10 +29,10 @@ class SculptoPrintOutputDevicePlugin(OutputDevicePlugin):
 
         # Load custom instances from preferences
         self._preferences = Preferences.getInstance()
-        self._preferences.addPreference("Sculptoprint/manual_instances", "{}")
+        self._preferences.addPreference("sculptoprint/manual_instances", "{}")
 
         try:
-            self._manual_instances = json.loads(self._preferences.getValue("Sculptoprint/manual_instances"))
+            self._manual_instances = json.loads(self._preferences.getValue("sculptoprint/manual_instances"))
         except ValueError:
             self._manual_instances = {}
         if not isinstance(self._manual_instances, dict):
@@ -65,7 +65,7 @@ class SculptoPrintOutputDevicePlugin(OutputDevicePlugin):
 
     def addManualInstance(self, name, address, port, path):
         self._manual_instances[name] = {"address": address, "port": port, "path": path}
-        self._preferences.setValue("Sculptoprint/manual_instances", json.dumps(self._manual_instances))
+        self._preferences.setValue("sculptoprint/manual_instances", json.dumps(self._manual_instances))
 
         properties = { b"path": path.encode("utf-8"), b"manual": b"true" }
 
@@ -82,7 +82,7 @@ class SculptoPrintOutputDevicePlugin(OutputDevicePlugin):
 
         if name in self._manual_instances:
             self._manual_instances.pop(name, None)
-            self._preferences.setValue("Sculptoprint/manual_instances", json.dumps(self._manual_instances))
+            self._preferences.setValue("sculptoprint/manual_instances", json.dumps(self._manual_instances))
 
     ##  Stop looking for devices on network.
     def stop(self):
@@ -99,8 +99,8 @@ class SculptoPrintOutputDevicePlugin(OutputDevicePlugin):
             return
 
         for key in self._instances:
-            if key == global_container_stack.getMetaDataEntry("Sculptoprint_id"):
-                self._instances[key].setApiKey(global_container_stack.getMetaDataEntry("Sculptoprint_api_key", ""))
+            if key == global_container_stack.getMetaDataEntry("sculptoprint_id"):
+                self._instances[key].setApiKey(global_container_stack.getMetaDataEntry("sculptoprint_api_key", ""))
                 self._instances[key].connectionStateChanged.connect(self._onInstanceConnectionStateChanged)
                 self._instances[key].connect()
             else:
@@ -109,13 +109,19 @@ class SculptoPrintOutputDevicePlugin(OutputDevicePlugin):
 
     ##  Because the model needs to be created in the same thread as the QMLEngine, we use a signal.
     def addInstance(self, name, address, port, properties):
+        Logger.log("d", "Adding Sculpto Printer with key {0}".format(name));
         instance = SculptoPrintOutputDevice.SculptoPrintOutputDevice(name, address, port, properties)
         self._instances[instance.getKey()] = instance
         global_container_stack = Application.getInstance().getGlobalContainerStack()
-        if global_container_stack and instance.getKey() == global_container_stack.getMetaDataEntry("Sculptoprint_id"):
-            instance.setApiKey(global_container_stack.getMetaDataEntry("Sculptoprint_api_key", ""))
+        if (not global_container_stack):
+            Logger.log("d", "Global container stack is not here??");
+        Logger.log("d", "Sculptoprint_id {0}".format(global_container_stack.getMetaDataEntry("sculptoprint_id")));
+        if global_container_stack and instance.getKey() == global_container_stack.getMetaDataEntry("sculptoprint_id"):
+            instance.setApiKey(global_container_stack.getMetaDataEntry("sculptoprint_api_key", ""))
             instance.connectionStateChanged.connect(self._onInstanceConnectionStateChanged)
             instance.connect()
+        else:
+            Logger.log("d", "Failed to create Sculpto instance!");
 
     def removeInstance(self, name):
         instance = self._instances.pop(name, None)
@@ -166,8 +172,9 @@ class SculptoPrintOutputDevicePlugin(OutputDevicePlugin):
                     Logger.log("w", "Could not get information about %s" % name)
                     return
 
-            if info.address and info.port:
+            if info.address:
                 address = '.'.join(map(lambda n: str(n), info.address))
+                Logger.log("d", "Adding Sculpto printer")
                 self.addInstanceSignal.emit(name, address, 8080, info.properties)
             else:
                 Logger.log("d", "Discovered instance named %s but received no address", name)

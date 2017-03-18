@@ -314,7 +314,7 @@ class SculptoPrintOutputDevice(PrinterOutputDevice):
         if not global_container_stack:
             return
 
-        self._auto_print = parseBool(global_container_stack.getMetaDataEntry("Sculptoprint_auto_print", True))
+        self._auto_print = parseBool(global_container_stack.getMetaDataEntry("sculptoprint_auto_print", True))
         if self._auto_print:
             Application.getInstance().showPrintMonitor.emit(True)
 
@@ -431,7 +431,7 @@ class SculptoPrintOutputDevice(PrinterOutputDevice):
         if not http_status_code:
             # Received no or empty reply
             return
-
+        Logger.log("w", "Got response")
         if reply.operation() == QNetworkAccessManager.GetOperation:
             if "temperature" in reply.url().toString():  # Status update from /temperature.
                 if http_status_code == 200:
@@ -464,10 +464,11 @@ class SculptoPrintOutputDevice(PrinterOutputDevice):
 
             elif "progress" in reply.url().toString():  # Status update from /progress:
                 if http_status_code == 500:
-                    #self.setTimeElapsed(0)
-                    #self.setTimeTotal(0)
+                    self.setTimeElapsed(0)
+                    self.setTimeTotal(0)
                     self._updateJobState("ready")
                     self.setProgress(0);
+                    self.setJobName("Waiting for Print")
                     self._is_printing = False
                 if http_status_code == 200:
                     json_data = json.loads(bytes(reply.readAll()).decode("utf-8"))
@@ -503,8 +504,8 @@ class SculptoPrintOutputDevice(PrinterOutputDevice):
             if "upload_and_print" in reply.url().toString():  # Result from /upload_and_print command:
                 if http_status_code == 201:
                     Logger.log("d", "Successfully uploaded and printing!")
-                    print_information = Application.getInstance().getPrintInformation()
-                    self.estimated_total = print_information.currentPrintTime
+                    print_information = Application.getInstance().getPrintInformation().currentPrintTime
+                    self.estimated_total = int(print_information.getDisplayString(0))
                     self.starting_time = time()
                     self.setTimeTotal(self.estimated_total);
                     self.setTimeElapsed(0);
