@@ -1,8 +1,8 @@
 # Sculpto
 A collection of my current knowledge about the printers internal workings.
 
-The printer is split between two processors, one accepting and executing G-Code. The other running Linux and serving as the interface to the outside world.
-## Printer MCU
+The printer is a combination of two processors, one running the printer firmware, accepting and executing G-Code. The other running  OpenWRT Linux and serving as the interface to the outside world.
+## Printer MCU board
 - LPC1768 microcontroller
 - Firmware: Smoothieware (Modified?)
 - Accepts commands through Serial
@@ -20,7 +20,7 @@ Two different versions of the Sculpto services exists. Version 1 ran directly on
 
 Version 2 runs on an external 1GB SD Card attached to the Linkit Smart board.
 
-The SDcard is encrypted is encrypted (Sigh..) using AES with a 256 bit randomly generated key stored in flash memory. Making each SD Card uniquely encrypted. 
+The SDcard is encrypted (Sigh..) using AES with a 256 bit randomly generated key stored in flash memory. Making each SD Card uniquely encrypted. 
 
 MD5 sums are saved of each file on the SD Card and compared at boot time. A backup will be restored should any file show any modification, accidental or intended.
 
@@ -68,3 +68,10 @@ If not currently printing it will look for the field *cool*. If this field is fo
 - **GET** /ping
 
 Returns "pong"
+
+# Accessing the printer
+**WARNING: Only proceed to connect to the printer through SSH if you know what you're doing! You are able to do considerable harm to the operating system if handled wrongly!**
+
+The printer is accessible through SSH on port 22. 
+
+**UNCONFIRMED** the *root* user should according to the install scripts be set to the printer serial number with zeroes prepended to achieve six characters in total. Meaning a serial of *175* would give a root password of *000175*
