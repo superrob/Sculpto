@@ -12,18 +12,34 @@ The printer is split between two processors, one accepting and executing G-Code.
 - Running OpenWRT
 - Stripped down version of Busybox.
 - Running the Dropbear SSH server.
-- Lists itself as a Zeroconf device as *_SCULPTO-PRINTER* with the name *Sculpto3D-SERIALNUMBER*
-- Communicating with the MCU through Serial 1
+- Lists itself as a Zeroconf device as *_SCULPTO-PRINTER* with the hostname *Sculpto3D-SERIALNUMBER*
+- Communicating with the MCU through /dev/ttyS0 with a baud rate of 57600
 
 ## Sculpto services
-Two different versions of the Sculpto services exists. Version 1 ran directly on internal flash in the /root/ directory is superseeded by Version 2.
+Two different versions of the Sculpto services exists. Version 1 ran directly on internal flash in the /root/ directory and is superseeded by Version 2.
 
-Version 2 runs on the external 1GB SD Card which is encrypted (Sigh..)
+Version 2 runs on an external 1GB SD Card attached to the Linkit Smart board.
+
+The SDcard is encrypted is encrypted (Sigh..) using AES with a 256 bit randomly generated key stored in flash memory. Making each SD Card uniquely encrypted. 
+
 MD5 sums are saved of each file on the SD Card and compared at boot time. A backup will be restored should any file show any modification, accidental or intended.
 
+### PrinterAPI
+Python program which works as the interface between the **Sculpto App** and the **PrintServer**. 
+
+Talks throught the Django powered API through HTTP.
+Attemps to associate with the API servers to get returned an session ID which is used as authentication.
+Starts polling the API for tasks.
+
+If association is not successfull the service opens a HTTP server and opens an accesspoint for the user to connect to which is then used for the initial setup. This association can fail either due to lack of connectivity or rejection by the Sculpto API.
+
+Periodically queries the **PrinterAPI** service through the 8080 web interface to get current progress and temperature. Also uses this interface to start prints.
+
+The PrinterAPI thus offers no direct user accessible interfaces.
+
 ### PrintServer
-Python program which talks with the MCU through Serial 1.
-Opens a web server on port 8080 as it's interface. Is available to the entire network.
+Python program which talks with the MCU through Serial. Is started by the **PrinterAPI** service.
+Opens a *Bottle* web server on port 8080 as it's interface. Is available to the entire network.
 Generally returns a JSON object in return.
 Provides the following HTTP methods:
 - **GET** /progress
@@ -42,7 +58,7 @@ Returns the response from the MCU or an error indicating no "OK" response from t
 
 - **POST** /gcode_file
 
-Looks for the field *gcode_file_path* and opens the file through *open*. Should be possible to trigger printing on network paths! Though not possible without editing the config for the **PrinterAPI** as it contains a sanitycheck. The check prevents the hotend staying hot, stopping any prints not started through the Sculpto web app.
+Looks for the field *gcode_file_path* and opens the file through *open*. Should be possible to trigger printing on network paths! Though not possible without editing the config for the **PrinterAPI** as it contains a sanitycheck. The check prevents the hotend staying hot, stopping any prints not started through the Sculpto App.
 
 - **POST** /stop_print
 
