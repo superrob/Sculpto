@@ -1,5 +1,6 @@
 # Sculpto
 A collection of my current knowledge about the printers internal workings.
+Collaboration is highly anpreciated! Remember to keep this repo free of any copyrighted code from the printer itself. Please post any modifications as instructions or patches.
 
 The printer is a combination of two processors, one running the printer firmware, accepting and executing G-Code. The other running  OpenWRT Linux and serving as the interface to the outside world.
 ## Printer MCU board
